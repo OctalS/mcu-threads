@@ -1,17 +1,13 @@
 #include <msp430g2553.h>
 #include <string.h>
-#include "thread.h"
-
-#define TIMER_TICK	3000
-
-thread_t threads[THREADS_MAX];
-
-thread_t *current = &threads[0];
+#include "threads.h"
 
 #define __delay(val) { \
 	volatile int __i; \
 	for (__i = 0; __i < (val); __i++); \
 }
+
+thread_t tr1, tr2, tr3, tr4;
 
 void	thread1(void)
 {
@@ -38,33 +34,33 @@ void	thread2(void)
 			P1OUT &= ~BIT6;
 
 		__delay(0x1000);
+
 	}
 }
 
-void	idle_thread(void)
+void	thread3(void)
 {
+	while (1) {
+		__delay(0xffea);
+	}
+}
+
+void	thread4(void)
+{
+	while (1) {
+		__delay(0xfea);
+	}
+}
+
+void	idle(void)
+{
+	thread_create(&tr1, thread1);
+	thread_create(&tr2, thread2);
+	thread_create(&tr3, thread3);
+	thread_create(&tr4, thread4);
 	while (1);
 }
 
-void	__add_thread(int idx, void *fn)
-{
-	//memset(&threads[idx].stack, 0x5a, sizeof(threads[idx].stack));
-
-	threads[idx].stack[31] = (unsigned int)fn;
-	threads[idx].stack[30] = GIE;
-	threads[idx].sp = (unsigned int)&threads[idx] + 60;
-}
-
-void	enable_timer(void)
-{
-
-	TACTL = TACLR;
-	TACCTL0 = CCIE;
-	TACCR0 = TIMER_TICK;
-	TACTL = TASSEL_2 | ID_3 | MC_1;
-
-	__enable_interrupt();
-}
 
 
 void	main(void)
@@ -76,9 +72,7 @@ void	main(void)
 	P1DIR |= BIT0 | BIT6;
 	P1OUT &= ~(BIT0 | BIT6);
 
-	__add_thread(1, thread1);
-	__add_thread(2, thread2);
-	enable_timer();
+	threads_init(idle);
 
 	while (1);
 }
