@@ -29,9 +29,9 @@ static void add_thread(thread_t *t, void *fn)
 
 void thread_create(thread_t *t, void *fn)
 {
-	__disable_interrupt();
+	thr_lock();
 	add_thread(t, fn);
-	__enable_interrupt();
+	thr_unlock();
 }
 
 void threads_init(void (*fn)(void))
