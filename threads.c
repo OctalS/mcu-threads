@@ -1,44 +1,45 @@
 #include <msp430g2553.h>
 #include <isr_compat.h>
-#include <string.h>
 #include "threads.h"
 
 #define TIMER_TICK	1000
 
-#define _PC_OFF		((THREAD_STACK_SIZE) - 1)
-#define _SR_OFF		((THREAD_STACK_SIZE) - 2)
-#define _SP_OFF		((THREAD_SIZE) - 4)
+#define PC_OFF		((THREAD_STACK_SIZE) - 1)
+#define SR_OFF		((THREAD_STACK_SIZE) - 2)
+#define SP_OFF		((THREAD_SIZE) - 4)
 
 static thread_t *current;
 static unsigned int save_r15;
 
-static thread_t __thread0;
+static thread_t thread0;
 
-static void __add_thread(thread_t *t, void *fn)
+static void add_thread(thread_t *t, void *fn)
 {
 	unsigned int ptr;
 
-	t->stack[_PC_OFF] = (unsigned int)fn;
-	t->stack[_SR_OFF] = GIE;
-	t->ctx.sp = (unsigned int)t + _SP_OFF;
+	t->stack[PC_OFF] = (unsigned int)fn;
+	t->stack[SR_OFF] = GIE;
+	t->regs[0] = (unsigned int)t + SP_OFF;
 
 	/* insert new thread after thread 0 */
-	ptr = __thread0.ctx.next;
-	t->ctx.next = ptr;
-	__thread0.ctx.next = (unsigned int)t;
+	ptr = thread0.next;
+	t->next = ptr;
+	thread0.next = (unsigned int)t;
 }
 
 void thread_create(thread_t *t, void *fn)
 {
 	__disable_interrupt();
-	__add_thread(t, fn);
+	add_thread(t, fn);
 	__enable_interrupt();
 }
 
 void threads_init(void (*fn)(void))
 {
-	__thread0.ctx.next = (unsigned int)&__thread0;
-	current = &__thread0;
+	__disable_interrupt();
+
+	thread0.next = (unsigned int)&thread0;
+	current = &thread0;
 
 	/* setup Timer A */
 	TACTL = TACLR;
@@ -73,8 +74,7 @@ ISR(TIMER0_A0, timerA_isr)
 "	mov r14, 22(r15)\n"
 "	mov %1, 24(r15)\n"	/* save original r15 */
 
-"	mov 26(r15), r14\n"	/* get next thread */
-"	mov r14, r15\n"
+"	mov 26(r15), r15\n"	/* get next thread */
 "	mov r15, %0\n"		/* current = next */
 
 "	mov 0(r15), r1\n"	/* get next stack */
