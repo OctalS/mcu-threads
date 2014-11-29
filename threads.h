@@ -14,7 +14,7 @@ typedef union {
 	unsigned int stack[THREAD_STACK_SIZE];
 } thread_t;
 
-#define thr_lock() { TACCTL0 = 0; }
+#define thr_lock() { TACCTL0 = 0; nop(); }
 #define thr_unlock() { TACCTL0 = CCIE; }
 
 extern void thread_create(thread_t *t, void *fn);
