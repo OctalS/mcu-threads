@@ -16,6 +16,9 @@ ISR(TIMER0_A0, timerA_isr)
 {
 	__asm__ __volatile__ (
 
+"	cmp #0, %2\n"		/* if timer is disabled do nothing */
+"	jeq 1f\n"
+
 "	mov r14, %1\n"
 "	mov %0, r14\n"		/* get current */
 
@@ -49,8 +52,10 @@ ISR(TIMER0_A0, timerA_isr)
 "	mov 20(r15), r13\n"
 "	mov 22(r15), r14\n"
 "	mov 24(r15), r15\n"
+"1:\n"
 
 	: "+m" (current), "+m" (save_r14)
+	: "m" (TACCTL0)
 
 	);
 }
