@@ -9,72 +9,31 @@
 #define SP_OFF		((THREAD_SIZE) - 4)
 
 static thread_t *current;
-static unsigned int save_r15;
-
 static thread_t thread0;
-
-static void add_thread(thread_t *t, void *fn)
-{
-	unsigned int ptr;
-
-	t->stack[PC_OFF] = (unsigned int)fn;
-	t->stack[SR_OFF] = GIE;
-	t->regs[0] = (unsigned int)t + SP_OFF;
-
-	/* insert new thread after thread 0 */
-	ptr = thread0.next;
-	t->next = ptr;
-	thread0.next = (unsigned int)t;
-}
-
-void thread_create(thread_t *t, void *fn)
-{
-	thr_lock();
-	add_thread(t, fn);
-	thr_unlock();
-}
-
-void threads_init(void (*fn)(void))
-{
-	__disable_interrupt();
-
-	thread0.next = (unsigned int)&thread0;
-	current = &thread0;
-
-	/* setup Timer A */
-	TACTL = TACLR;
-	TACCTL0 = CCIE;
-	TACCR0 = TIMER_TICK;
-	TACTL = TASSEL_2 | ID_3 | MC_1;
-
-	__enable_interrupt();
-
-	/* Enter thread 0 immediately before first timer tick! */
-	(*fn)();
-}
+static unsigned int save_r14;
 
 ISR(TIMER0_A0, timerA_isr)
 {
 	__asm__ __volatile__ (
 
-"	mov r15, %1\n"
-"	mov %0, r15\n"		/* get current */
+"	mov r14, %1\n"
+"	mov %0, r14\n"		/* get current */
 
-"	mov r1, 0(r15)\n"	/* save current stack */
-"	mov r4, 2(r15)\n"	/* save rest of cpu regs */
-"	mov r5, 4(r15)\n"
-"	mov r6, 6(r15)\n"
-"	mov r7, 8(r15)\n"
-"	mov r8, 10(r15)\n"
-"	mov r9, 12(r15)\n"
-"	mov r10, 14(r15)\n"
-"	mov r11, 16(r15)\n"
-"	mov r12, 18(r15)\n"
-"	mov r13, 20(r15)\n"
-"	mov r14, 22(r15)\n"
-"	mov %1, 24(r15)\n"	/* save original r15 */
+"	mov r1, 0(r14)\n"	/* save current stack */
+"	mov r4, 2(r14)\n"	/* save rest of cpu regs */
+"	mov r5, 4(r14)\n"
+"	mov r6, 6(r14)\n"
+"	mov r7, 8(r14)\n"
+"	mov r8, 10(r14)\n"
+"	mov r9, 12(r14)\n"
+"	mov r10, 14(r14)\n"
+"	mov r11, 16(r14)\n"
+"	mov r12, 18(r14)\n"
+"	mov r13, 20(r14)\n"
+"	mov %1, 22(r14)\n"	/* save original r14 */
+"	mov r15, 24(r14)\n"
 
-"	mov 26(r15), r15\n"	/* get next thread */
+"	mov 26(r14), r15\n"	/* get next thread */
 "	mov r15, %0\n"		/* current = next */
 
 "	mov 0(r15), r1\n"	/* get next stack */
@@ -91,7 +50,78 @@ ISR(TIMER0_A0, timerA_isr)
 "	mov 22(r15), r14\n"
 "	mov 24(r15), r15\n"
 
-	: "+m" (current), "+m" (save_r15)
+	: "+m" (current), "+m" (save_r14)
 
 	);
+}
+
+#define thr_sched()		\
+	asm (			\
+	"dint\n"		\
+	"nop\n"			\
+	"jmp timerA_isr"	\
+	)
+
+static inline void add_thread_after(thread_t *where, thread_t *t)
+{
+	thread_t *next;
+
+	next = (thread_t *)where->next;
+
+	where->next = (unsigned int)t;
+	t->prev = (unsigned int)where;
+	t->next = (unsigned int)next;
+	next->prev = (unsigned int)t;
+}
+
+static void add_thread(thread_t *t, void *fn)
+{
+	t->stack[PC_OFF] = (unsigned int)fn;
+	t->stack[SR_OFF] = GIE;
+	t->regs[0] = (unsigned int)t + SP_OFF;
+
+	add_thread_after(current ,t);
+}
+
+static void del_thread(thread_t *t)
+{
+	thread_t *prev;
+
+	prev = (thread_t *)current->prev;
+	prev->next = current->next;
+}
+
+void thread_create(thread_t *t, void *fn)
+{
+	thr_lock();
+	add_thread(t, fn);
+	thr_unlock();
+}
+
+void thread_exit(void)
+{
+	thr_lock();
+	del_thread(current);
+	thr_unlock();
+	thr_sched();
+}
+
+void threads_init(void (*fn)(void))
+{
+	__disable_interrupt();
+
+	thread0.next = (unsigned int)&thread0;
+	thread0.prev = (unsigned int)&thread0;
+	current = &thread0;
+
+	/* setup Timer A */
+	TACTL = TACLR;
+	TACCTL0 = CCIE;
+	TACCR0 = TIMER_TICK;
+	TACTL = TASSEL_2 | ID_3 | MC_1;
+
+	__enable_interrupt();
+
+	/* Enter thread 0 immediately before first timer tick! */
+	(*fn)();
 }

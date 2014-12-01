@@ -10,6 +10,7 @@ typedef union {
 	struct {
 		unsigned int regs[NR_REGS];
 		unsigned int next;
+		unsigned int prev;
 	};
 	unsigned int stack[THREAD_STACK_SIZE];
 } thread_t;
@@ -18,6 +19,7 @@ typedef union {
 #define thr_unlock() { TACCTL0 = CCIE; }
 
 extern void thread_create(thread_t *t, void *fn);
+extern void thread_exit(void);
 extern void threads_init(void (*fn)(void));
 
 #endif

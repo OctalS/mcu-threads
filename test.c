@@ -12,8 +12,9 @@ thread_t tr1, tr2, tr3, tr4;
 void	thread1(void)
 {
 	int x = 0;
+	int i;
 
-	while (1) {
+	for (i = 0; i < 10; i++) {
 		if (x++ % 2)
 			P1OUT |= BIT0;
 		else
@@ -21,6 +22,9 @@ void	thread1(void)
 
 		__delay(0xffff);
 	}
+
+	P1OUT &= ~BIT0;
+	thread_exit();
 }
 
 void	thread2(void)
@@ -56,8 +60,8 @@ void	idle(void)
 {
 	thread_create(&tr1, thread1);
 	thread_create(&tr2, thread2);
-	thread_create(&tr3, thread3);
-	thread_create(&tr4, thread4);
+	//thread_create(&tr3, thread3);
+	//thread_create(&tr4, thread4);
 	while (1);
 }
 
