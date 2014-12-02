@@ -83,6 +83,14 @@ static inline void add_thread_after(thread_t *where, thread_t *t)
 	next->prev = (unsigned int)t;
 }
 
+static inline void del_thread(thread_t *t)
+{
+	thread_t *prev;
+
+	prev = (thread_t *)t->prev;
+	prev->next = t->next;
+}
+
 static void add_thread(thread_t *t, void *fn)
 {
 	t->stack[PC_OFF] = (unsigned int)fn;
@@ -92,13 +100,6 @@ static void add_thread(thread_t *t, void *fn)
 	add_thread_after(current ,t);
 }
 
-static void del_thread(thread_t *t)
-{
-	thread_t *prev;
-
-	prev = (thread_t *)t->prev;
-	prev->next = t->next;
-}
 
 void thread_create(thread_t *t, void *fn)
 {
