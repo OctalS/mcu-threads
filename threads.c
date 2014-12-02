@@ -92,8 +92,8 @@ static void del_thread(thread_t *t)
 {
 	thread_t *prev;
 
-	prev = (thread_t *)current->prev;
-	prev->next = current->next;
+	prev = (thread_t *)t->prev;
+	prev->next = t->next;
 }
 
 void thread_create(thread_t *t, void *fn)
