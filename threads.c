@@ -67,6 +67,10 @@ ISR(TIMER0_A0, timerA_isr)
 	"jmp timerA_isr"	\
 	)
 
+#define thr_lonely(t) ((t)->prev == (t)->next)
+
+#define _spin() { while(1); }
+
 static inline void add_thread_after(thread_t *where, thread_t *t)
 {
 	thread_t *next;
@@ -106,6 +110,10 @@ void thread_create(thread_t *t, void *fn)
 void thread_exit(void)
 {
 	thr_lock();
+
+	if (thr_lonely(current))
+		_spin();
+
 	del_thread(current);
 	thr_unlock();
 	thr_sched();
