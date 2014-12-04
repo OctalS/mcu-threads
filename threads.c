@@ -75,6 +75,9 @@ ISR(TIMER0_A0, timerA_isr)
 
 #define _spin() { while(1); }
 
+#define thr_lock() { TACCTL0 = 0; nop(); }
+#define thr_unlock() { TACCTL0 = CCIE; }
+
 static inline void add_thread_after(thread_t *where, thread_t *t)
 {
 	thread_t *next;
