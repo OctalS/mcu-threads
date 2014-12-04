@@ -62,9 +62,13 @@ ISR(TIMER0_A0, timerA_isr)
 
 #define thr_sched()		\
 	asm (			\
-	"dint\n"		\
-	"nop\n"			\
-	"jmp timerA_isr"	\
+"	dint\n"			\
+"	nop\n"			\
+"	push.w #1f\n"		\
+"	push.w r2\n"		\
+"	bis #8, @r1\n"		\
+"	jmp timerA_isr\n"	\
+"1:	nop\n"			\
 	)
 
 #define thr_lonely(t) ((t)->next == (unsigned int)(t))
