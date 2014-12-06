@@ -15,8 +15,16 @@ typedef union {
 	unsigned int stack[THREAD_STACK_SIZE];
 } thread_t;
 
+extern thread_t *current;
+
 extern void thread_create(thread_t *t, void *fn);
 extern void thread_exit(void);
 extern void threads_init(void (*fn)(void));
+extern void thread_sleep(thread_t *t);
+extern void thread_wakeup(void);
 
+#define thread_wait(cond) \
+	while (!(cond)) { \
+		thread_sleep(current); \
+	}
 #endif

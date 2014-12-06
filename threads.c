@@ -8,7 +8,9 @@
 #define SR_OFF		((THREAD_STACK_SIZE) - 2)
 #define SP_OFF		((THREAD_SIZE) - 4)
 
-static thread_t *current;
+thread_t *current;
+
+static thread_t *sleepers;
 static thread_t thread0;
 static unsigned int save_r14;
 
@@ -109,6 +111,56 @@ static void add_thread(thread_t *t, void *fn)
 	add_thread_after(current ,t);
 }
 
+void thread_sleep(thread_t *t)
+{
+	thread_t *l;
+
+	thr_lock();
+	del_thread(t);
+
+	if (!sleepers) {
+		t->prev = (unsigned int)t;
+		sleepers = t;
+		goto sched;
+	}
+
+	l = (thread_t *)sleepers->prev;
+	sleepers->prev = (unsigned int)t;
+	l->next = (unsigned int)t;
+	t->prev = (unsigned int)l;
+sched:
+	thr_unlock();
+	thr_sched();
+}
+
+void thread_wakeup(void)
+{
+	thread_t *n, *l;
+
+	thr_lock();
+
+	if (!sleepers) {
+		thr_unlock();
+		return;
+	}
+
+	if (sleepers->prev == (unsigned int)sleepers) {
+		add_thread_after(current, sleepers);
+		goto sched;
+	}
+
+	n = (thread_t *)current->next;
+	l = (thread_t *)sleepers->prev;
+	current->next = (unsigned int)sleepers;
+	sleepers->prev = (unsigned int)current;
+	l->next = (unsigned int)n;
+	n->prev = (unsigned int)l;
+
+sched:
+	sleepers = (void *)0;
+	thr_unlock();
+	thr_sched();
+}
 
 void thread_create(thread_t *t, void *fn)
 {
@@ -136,6 +188,7 @@ void threads_init(void (*fn)(void))
 	thread0.next = (unsigned int)&thread0;
 	thread0.prev = (unsigned int)&thread0;
 	current = &thread0;
+	sleepers = (void *)0;
 
 	/* setup Timer A */
 	TACTL = TACLR;
