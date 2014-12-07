@@ -8,12 +8,16 @@
 #define SR_OFF		((THREAD_STACK_SIZE) - 2)
 #define SP_OFF		((THREAD_SIZE) - 4)
 
+/* this always points to the currently running thread */
 thread_t *current;
 
+/* head for the sleeping threads */
 static thread_t *sleepers;
+
 static thread_t thread0;
 static unsigned int save_r14;
 
+/* threads scheduler */
 ISR(TIMER0_A0, timerA_isr)
 {
 	__asm__ __volatile__ (
@@ -42,7 +46,7 @@ ISR(TIMER0_A0, timerA_isr)
 "	mov r15, %0\n"		/* current = next */
 
 "	mov 0(r15), r1\n"	/* get next stack */
-"	mov 2(r15), r4\n"	/* restore next context */
+"	mov 2(r15), r4\n"	/* restore next's context */
 "	mov 4(r15), r5\n"
 "	mov 6(r15), r6\n"
 "	mov 8(r15), r7\n"
@@ -62,6 +66,9 @@ ISR(TIMER0_A0, timerA_isr)
 	);
 }
 
+/* This yelds the cpu to another thread.
+ * As there is no sw int instruction, 
+ * we simulate one */
 #define thr_sched()		\
 	asm (			\
 "	dint\n"			\
@@ -77,9 +84,16 @@ ISR(TIMER0_A0, timerA_isr)
 
 #define _spin() { while(1); }
 
+/* Disables timer A
+ *
+ * The nop is for safety an interrupt
+ * rises while still disalbeing the timer */
 #define thr_lock() { TACCTL0 = 0; nop(); }
+
+/* Reenables timer A */
 #define thr_unlock() { TACCTL0 = CCIE; }
 
+/* Adds thread 't' after thread 'where' */
 static inline void add_thread_after(thread_t *where, thread_t *t)
 {
 	thread_t *next;
@@ -92,6 +106,9 @@ static inline void add_thread_after(thread_t *where, thread_t *t)
 	next->prev = (unsigned int)t;
 }
 
+/* Unlinks thread 't' from the list
+ * of running threads.
+ * NOTE: t->next, and t->prev are left untouched */
 static inline void del_thread(thread_t *t)
 {
 	thread_t *prev, *next;
@@ -102,6 +119,7 @@ static inline void del_thread(thread_t *t)
 	next->prev = (unsigned int)prev;
 }
 
+/* Adds a freshly created thread */
 static void add_thread(thread_t *t, void *fn)
 {
 	t->stack[PC_OFF] = (unsigned int)fn;
@@ -111,6 +129,9 @@ static void add_thread(thread_t *t, void *fn)
 	add_thread_after(current ,t);
 }
 
+/* Unlink thread 't' from the list
+ * of running threads and put it
+ * in the list of sleeping ones */
 void thread_sleep(thread_t *t)
 {
 	thread_t *l;
@@ -133,6 +154,8 @@ sched:
 	thr_sched();
 }
 
+/* Wakes up all threads in the queue.
+ * Threads are appended right after current */
 void thread_wakeup(void)
 {
 	thread_t *n, *l;
@@ -169,6 +192,8 @@ void thread_create(thread_t *t, void *fn)
 	thr_unlock();
 }
 
+/* Permanently unlink current thread from
+ * the list of running threads. */
 void thread_exit(void)
 {
 	thr_lock();
