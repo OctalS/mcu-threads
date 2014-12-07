@@ -77,7 +77,7 @@ ISR(TIMER0_A0, timerA_isr)
 "1:	nop\n"			\
 	)
 
-#define thr_lonely(t) ((t)->next == (unsigned int)(t))
+#define thr_lonely(t) ((t)->next == (t))
 
 #define _spin() { while(1); }
 
@@ -95,12 +95,12 @@ static inline void add_thread_after(thread_t *where, thread_t *t)
 {
 	thread_t *next;
 
-	next = (thread_t *)where->next;
+	next = where->next;
 
-	where->next = (unsigned int)t;
-	t->prev = (unsigned int)where;
-	t->next = (unsigned int)next;
-	next->prev = (unsigned int)t;
+	where->next = t;
+	t->prev = where;
+	t->next = next;
+	next->prev = t;
 }
 
 /* Unlinks thread 't' from the list
@@ -110,10 +110,10 @@ static inline void del_thread(thread_t *t)
 {
 	thread_t *prev, *next;
 
-	prev = (thread_t *)t->prev;
-	next = (thread_t *)t->next;
-	prev->next = (unsigned int)next;
-	next->prev = (unsigned int)prev;
+	prev = t->prev;
+	next = t->next;
+	prev->next = next;
+	next->prev = prev;
 }
 
 /* Adds a freshly created thread */
@@ -137,15 +137,15 @@ void thread_sleep(thread_t **wq, thread_t *t)
 	del_thread(t);
 
 	if (!*wq) {
-		t->prev = (unsigned int)t;
+		t->prev = t;
 		*wq = t;
 		goto sched;
 	}
 
-	l = (thread_t *)(*wq)->prev;
-	(*wq)->prev = (unsigned int)t;
-	l->next = (unsigned int)t;
-	t->prev = (unsigned int)l;
+	l = (*wq)->prev;
+	(*wq)->prev = t;
+	l->next = t;
+	t->prev = l;
 sched:
 	thr_unlock();
 	thr_sched();
@@ -164,17 +164,17 @@ void thread_wakeup(thread_t **wq)
 		return;
 	}
 
-	if ((*wq)->prev == (unsigned int)*wq) {
+	if ((*wq)->prev == *wq) {
 		add_thread_after(current, *wq);
 		goto sched;
 	}
 
-	n = (thread_t *)current->next;
-	l = (thread_t *)(*wq)->prev;
-	current->next = (unsigned int)*wq;
-	(*wq)->prev = (unsigned int)current;
-	l->next = (unsigned int)n;
-	n->prev = (unsigned int)l;
+	n = current->next;
+	l = (*wq)->prev;
+	current->next = *wq;
+	(*wq)->prev = current;
+	l->next = n;
+	n->prev = l;
 
 sched:
 	*wq = (void *)0;
@@ -207,8 +207,8 @@ void threads_init(void (*fn)(void))
 {
 	__disable_interrupt();
 
-	thread0.next = (unsigned int)&thread0;
-	thread0.prev = (unsigned int)&thread0;
+	thread0.next = &thread0;
+	thread0.prev = &thread0;
 	current = &thread0;
 
 	/* setup Timer A */

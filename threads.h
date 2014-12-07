@@ -6,11 +6,11 @@
 
 #define NR_REGS	13
 
-typedef union {
+typedef union thread {
 	struct {
 		unsigned int regs[NR_REGS];
-		unsigned int next;
-		unsigned int prev;
+		union thread *next;
+		union thread *prev;
 	};
 	unsigned int stack[THREAD_STACK_SIZE];
 } thread_t;
