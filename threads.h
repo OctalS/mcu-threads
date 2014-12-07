@@ -20,11 +20,12 @@ extern thread_t *current;
 extern void thread_create(thread_t *t, void *fn);
 extern void thread_exit(void);
 extern void threads_init(void (*fn)(void));
-extern void thread_sleep(thread_t *t);
-extern void thread_wakeup(void);
+extern void thread_sleep(thread_t **wq, thread_t *t);
+extern void thread_wakeup(thread_t **wq);
 
-#define thread_wait(cond) \
-	while (!(cond)) { \
-		thread_sleep(current); \
-	}
-#endif
+#define DEFINE_WAIT_QUEUE(q) thread_t *q = (void *)0
+
+#define thread_wait(wq, cond) \
+	while (!(cond)) { thread_sleep((wq), current); }
+
+#endif /* THREADS_H */
