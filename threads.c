@@ -2,7 +2,7 @@
 #include <isr_compat.h>
 #include "threads.h"
 
-#define TIMER_TICK	10000
+#define TIMER_TICK	1000
 
 #define PC_OFF		((THREAD_STACK_SIZE) - 1)
 #define SR_OFF		((THREAD_STACK_SIZE) - 2)
