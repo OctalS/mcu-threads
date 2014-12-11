@@ -8,7 +8,7 @@
 #define SR_OFF		((THREAD_STACK_SIZE) - 2)
 #define SP_OFF		((THREAD_SIZE) - 4)
 
-/* this always points to the currently running thread */
+/* This always points to the currently running thread */
 thread_t *current;
 
 static thread_t thread0;
@@ -64,7 +64,7 @@ ISR(TIMER0_A0, timerA_isr)
 }
 
 /* This yelds the cpu to another thread.
- * As there is no sw int instruction, 
+ * As there is no sw int instruction,
  * we simulate one */
 #define thr_sched()		\
 	asm (			\
@@ -79,7 +79,7 @@ ISR(TIMER0_A0, timerA_isr)
 
 #define thr_lonely(t) ((t)->next == (t))
 
-#define _spin() { while(1); }
+#define thr_spin() { while(1); }
 
 /* Disables timer A
  *
@@ -196,7 +196,7 @@ void thread_exit(void)
 	thr_lock();
 
 	if (thr_lonely(current))
-		_spin();
+		thr_spin();
 
 	del_thread(current);
 	thr_unlock();
