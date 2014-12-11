@@ -85,10 +85,17 @@ ISR(TIMER0_A0, timerA_isr)
  *
  * The nop is for safety an interrupt
  * rises while still disalbeing the timer */
-#define thr_lock() { TACCTL0 = 0; nop(); }
+#define thr_lock()		\
+	do {			\
+		TACCTL0 = 0;	\
+		nop();		\
+	} while (0)
 
 /* Reenables timer A */
-#define thr_unlock() { TACCTL0 = CCIE; }
+#define thr_unlock()		\
+	do {			\
+		TACCTL0 = CCIE;	\
+	} while (0)
 
 /* Adds thread 't' after thread 'where' */
 static inline void add_thread_after(thread_t *where, thread_t *t)
