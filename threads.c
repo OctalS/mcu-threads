@@ -11,6 +11,9 @@
 /* This always points to the currently running thread */
 thread_t *current;
 
+/* List of all running threads */
+thread_t *running;
+
 static thread_t thread0;
 static unsigned int save_r14;
 
@@ -98,7 +101,7 @@ ISR(TIMER0_A0, timerA_isr)
 	} while (0)
 
 /* Adds thread 't' after thread 'where' */
-static inline void add_thread_after(thread_t *where, thread_t *t)
+static inline void __add_thread(thread_t *where, thread_t *t)
 {
 	thread_t *next;
 
@@ -121,16 +124,37 @@ static inline void del_thread(thread_t *t)
 	next = t->next;
 	prev->next = next;
 	next->prev = prev;
+
+	if (running == t)
+		running = next;
+}
+
+#define add_first_thread(tr)		\
+	do {				\
+		(tr)->next = (tr);	\
+		(tr)->prev = (tr);	\
+		running = (tr);		\
+	} while (0)
+
+#define add_thread_after(where, tr)	__add_thread((where), (tr))
+#define add_thread_before(where, tr)	__add_thread((where)->prev, (tr))
+
+static inline void run_thread(thread_t *t)
+{
+	if (!running)
+		add_first_thread(t);
+	else
+		add_thread_before(running, t);
 }
 
 /* Adds a freshly created thread */
-static void add_thread(thread_t *t, void *fn)
+static inline void add_thread(thread_t *t, void *fn)
 {
 	t->stack[PC_OFF] = (unsigned int)fn;
 	t->stack[SR_OFF] = GIE;
 	t->regs[0] = (unsigned int)t + SP_OFF;
 
-	add_thread_after(current ,t);
+	run_thread(t);
 }
 
 /* Unlink thread 't' from the list
@@ -158,35 +182,56 @@ sched:
 	thr_sched();
 }
 
-/* Wakes up all threads in the queue.
- * Threads are appended right after current */
-void thread_wakeup(thread_t **wq)
+/* Wakes up all threads in the queue 'wq' immediatly.
+ * Threads are appended right after current and 
+ * and thread switch is performed. */
+void thread_wakeup_now(thread_t **wq)
 {
-	thread_t *n, *l;
+	thread_t *rnext, *slast;
 
 	thr_lock();
 
-	if (!*wq) {
-		thr_unlock();
-		return;
-	}
+	if (!*wq)
+		goto exit;
 
-	if ((*wq)->prev == *wq) {
-		add_thread_after(current, *wq);
-		goto sched;
-	}
-
-	n = current->next;
-	l = (*wq)->prev;
+	rnext = current->next;
+	slast = (*wq)->prev;
 	current->next = *wq;
 	(*wq)->prev = current;
-	l->next = n;
-	n->prev = l;
+	slast->next = rnext;
+	rnext->prev = slast;
 
-sched:
 	*wq = (void *)0;
+
 	thr_unlock();
 	thr_sched();
+	return;
+exit:
+	thr_unlock();
+}
+
+/* Wakes up all threads in the queue 'wq'.
+ * Threads are appended at the end of
+ * the list of running threads */
+void thread_wakeup(thread_t **wq)
+{
+	thread_t *rlast, *slast;
+
+	thr_lock();
+
+	if (!*wq)
+		goto exit;
+
+	rlast = running->prev;
+	slast = (*wq)->prev;
+	rlast->next = (*wq);
+	(*wq)->prev = rlast;
+	slast->next = running;
+	running->prev = slast;
+
+	*wq = (void *)0;
+exit:
+	thr_unlock();
 }
 
 void thread_create(thread_t *t, void *fn)
@@ -214,8 +259,7 @@ void threads_init(void (*fn)(void))
 {
 	__disable_interrupt();
 
-	thread0.next = &thread0;
-	thread0.prev = &thread0;
+	add_first_thread(&thread0);
 	current = &thread0;
 
 	/* setup Timer A */

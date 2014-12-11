@@ -22,6 +22,7 @@ extern void thread_exit(void);
 extern void threads_init(void (*fn)(void));
 extern void thread_sleep(thread_t **wq, thread_t *t);
 extern void thread_wakeup(thread_t **wq);
+extern void thread_wakeup_now(thread_t **wq);
 
 #define DEFINE_WAIT_QUEUE(q) thread_t *q = (void *)0
 
