@@ -33,8 +33,22 @@ extern void thread_sleep(thread_t **wq, thread_t *t);
 extern void thread_wakeup(thread_t **wq);
 extern void thread_wakeup_now(thread_t **wq);
 
-#define DEFINE_WAIT_QUEUE(q) thread_t *q = (void *)0
+/**
+ * Defines and initializes a wait queue
+ *
+ * @name: name of the queue
+*/
+#define DEFINE_WAIT_QUEUE(name) thread_t *name = (void *)0
 
+/**
+ * Wait on a condition.
+ *
+ * @wq: ** pointer the wait queue
+ * @cond: condition to wait on
+ *
+ * Puts the current thread to sleep until
+ * the condition is met.
+*/
 #define thread_wait(wq, cond) \
 	while (!(cond)) { thread_sleep((wq), current); }
 

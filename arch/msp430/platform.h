@@ -22,9 +22,9 @@
 #include <common.h>
 
 #define TIMER_TICK	1000
+
 static unsigned int save_r14;
 
-/* threads scheduler */
 ISR(TIMER0_A0, timerA_isr)
 {
 	__asm__ __volatile__ (
@@ -110,7 +110,6 @@ ISR(TIMER0_A0, timerA_isr)
 #define SR_OFF		((THREAD_SIZE / 2) - 2)
 #define SP_OFF		(THREAD_SIZE - 4)
 
-/* Adds a freshly created thread */
 static inline void arch_prepare_thread(thread_t *t, void *fn)
 {
 	unsigned int *p = (unsigned int *)&t->stack;
@@ -120,7 +119,6 @@ static inline void arch_prepare_thread(thread_t *t, void *fn)
 	t->regs[0] = (unsigned int)t + SP_OFF;
 }
 
-/* Called with interrupts disabled */
 static inline void arch_init(void)
 {
 	/* setup Timer A */

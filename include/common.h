@@ -20,13 +20,14 @@
 #ifndef COMMON_H
 #define COMMON_H
 
-#if ((__GNUC__ >= 4) && (__GNUC_MINOR__ >= 6))
-
+/** Minimum stack size in bytes */
 #define STACK_MIN	16
+
+/** Minimum thread size in bytes */
 #define THREAD_SIZE_MIN	(NR_REGS * sizeof(REG_TYPE) + 2 * sizeof(void *) + STACK_MIN)
 
+#if ((__GNUC__ >= 4) && (__GNUC_MINOR__ >= 6))
 _Static_assert(!(THREAD_SIZE < THREAD_SIZE_MIN), "THREAD_SIZE is too small. Wont compile.");
-
 #endif
 
 typedef REG_TYPE reg_t;
