@@ -26,13 +26,39 @@
 #ifndef THREADS_API
 #define THREADS_API
 
-#define thr_lock()	arch_threads_lock()
-#define thr_unlock()	arch_threads_unlock()
-#define thr_sched()	arch_schedule()
-#define disable_interrupts() arch_disable_interrupts();
-#define enable_interrupts() arch_enable_interrupts();
+static inline void thr_disable_interrupts(void)
+{
+	arch_disable_interrupts();
+}
 
-static void arch_init(void);
-static void arch_prepare_thread(thread_t *t, void *fn);
+static inline void thr_enable_interrupts(void)
+{
+	arch_enable_interrupts();
+}
+
+static inline void thr_lock(void)
+{
+	arch_threads_lock();
+}
+
+static inline void thr_unlock(void)
+{
+	arch_threads_unlock();
+}
+
+static inline void thr_sched(void)
+{
+	arch_schedule();
+}
+
+static inline void thr_prepare(thread_t *t, void *fn)
+{
+	arch_prepare_thread(t, fn);
+}
+
+static inline void thr_init(void)
+{
+	arch_init();
+}
 
 #endif /* THREADS_API */

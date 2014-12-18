@@ -17,8 +17,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include <common.h>
-#include <threads_api.h>
 #include <platform.h>
+#include <threads_api.h>
 
 /* This always points to the currently running thread */
 thread_t *current;
@@ -216,7 +216,7 @@ exit:
 */
 static inline void add_thread(thread_t *t, void *fn)
 {
-	arch_prepare_thread(t, fn);
+	thr_prepare(t, fn);
 	add_thread_before(running, t);
 }
 
@@ -264,14 +264,14 @@ void thread_exit(void)
 */
 void threads_init(void (*fn)(void))
 {
-	disable_interrupts();
+	thr_disable_interrupts();
 
 	add_first_thread(&thread0);
 	current = &thread0;
 
-	arch_init();
+	thr_init();
 
-	enable_interrupts();
+	thr_enable_interrupts();
 
 	/* Enter thread 0 immediately before first timer tick! */
 	(*fn)();
