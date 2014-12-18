@@ -1,19 +1,9 @@
 #ifndef THREADS_H
 #define THREADS_H
 
-#define THREAD_SIZE		64
-#define THREAD_STACK_SIZE	(THREAD_SIZE) / 2
+#define THREAD_SIZE	@THREAD_SIZE@
 
-#define NR_REGS	13
-
-typedef union thread {
-	struct {
-		unsigned int regs[NR_REGS];
-		union thread *next;
-		union thread *prev;
-	};
-	unsigned int stack[THREAD_STACK_SIZE];
-} thread_t;
+typedef unsigned char thread_t[THREAD_SIZE];
 
 extern thread_t *current;
 
