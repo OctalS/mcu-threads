@@ -18,7 +18,7 @@
 */
 #include <common.h>
 #include <platform.h>
-#include <threads_api.h>
+#include <arch_api.h>
 
 /* This always points to the currently running thread */
 thread_t *current;

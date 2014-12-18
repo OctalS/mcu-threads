@@ -20,7 +20,7 @@ OUT_H := $(OUT_DIR)/$(OUT).h
 OUT_A := $(OUT_DIR)/$(OUT).a
 OUT_O := $(OUT).o
 OUT_C := $(OUT).c
-OUT_DEPS := $(OUT).c $(DIR)/platform.h include/common.h include/threads_api.h
+OUT_DEPS := $(OUT).c $(DIR)/platform.h include/common.h include/arch_api.h
 
 ARCH_OUT := arch.a
 CONFIG_MK := $(DIR)/config.mk

@@ -23,8 +23,8 @@
  * to doc/arch_api.txt
 */
 
-#ifndef THREADS_API
-#define THREADS_API
+#ifndef ARCH_API
+#define ARCH_API
 
 static inline void thr_disable_interrupts(void)
 {
@@ -61,4 +61,4 @@ static inline void thr_init(void)
 	arch_init();
 }
 
-#endif /* THREADS_API */
+#endif /* ARCH_API */
