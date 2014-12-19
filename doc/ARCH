@@ -1,0 +1,67 @@
+mcu-threads: adding support for new architectures
+=================================================
+
+This document describes the interface provided by mcu-threads to add support
+for different architectures and devices.
+
+1. Create a directory in arch/ with a proper name (like mips, arm ..etc)
+2. You must provide the following files in your arch folder:
+
+config.mk: Config Makefile that must set the following variables:
+-----------------------------------------------------------------
+Absolutely required:
+  TOOLCHAIN := your toolchain prefix
+  REG_TYPE := C register type (TODO: change this to REG_SIZE)
+  NR_REGS := number of registers that you will save on context switch
+  THREAD_SIZE := the preferred thread size. In this size is include
+
+Optional:
+  FLAGS := Any flags that need to go the compiler.
+
+Exported variables that can be used by config.mk:
+  ARCH - Holds the name of your arch
+  CPU - Holds the cpu variant if provided. Use it to select proper flags for the compiler
+        for example, or anything meaningful to you.
+
+Your are free to define anything else that may be meaningful to you in this file.
+DO NOT DEFINE MAKE RULES IN THIS FILE!
+
+platform.h: Implements all arch api calls to link with mcu-threads
+------------------------------------------------------------------
+You must provide implementation of all arch api calls defined in include/arch_api.h
+For details on each api call please read doc/ARCH_API
+
+3. Optional. You can provide a Makefile in your arch directory.
+This Makefile will be executed by the build system automatically if present.
+This gives you the ability to compile any arch specific code which will be included in mcu-threads.
+
+If you choose to create this file you must follow this convention:
+
+You must define a target named $(OUT) which creates the static object $(OUT)
+
+The build system also provides you with the following variables: 
+  ARCH - Holds the name of your arch
+  CPU - The cpu variant if provided.
+  TOOLCHAIN - your toolchain prefix
+  CC - Prefixed C compiler including including: 
+        all settings defined in section 2) defined as macros with -D, and include path to ../../include
+  AS - Prefixed as (TODO: add flags)
+  AR - Prefixed ar
+  LD - Prefixed ld
+  CPP - Prefixed cpp
+
+In your source files:
+
+#include <common.h> - This file defines thread_t and other. Take a look at it.
+
+4. Implement a scheduler.
+mcu-threads is designed to be used with timer interrupts to schedule threads.
+The actual task switching is left to be implemented by you because it is arch specific.
+Provided by mcu-threads from include/common.h
+
+        thread_t *current - points to the currently running thread.
+                        You should update it's value on every task switch.
+
+        current->next - points to the next thread to run
+        current->prev - points to the previous thread
+        current->regs[NR_REGS] - place to save your cpu context
