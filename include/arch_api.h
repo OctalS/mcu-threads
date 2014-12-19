@@ -17,10 +17,10 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  *
- * API interface between threads library and specific arch.
+ * API between threads library and specific arch.
  * If you want to add a new arch you must implement all the
  * arch_() calls referenced here. For more information please refer
- * to doc/arch_api.txt
+ * to doc/ARCH_API
 */
 
 #ifndef ARCH_API
