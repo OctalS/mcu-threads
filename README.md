@@ -1,5 +1,5 @@
-mcu-threads: threading library for embedded systems
-===================================================
+mcu-threads
+===========
 Small and compact library to implement multitasking
 in embedded systems where resources are scarce.
 This lib can run even on a chip with less
