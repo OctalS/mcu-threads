@@ -33,12 +33,13 @@ For details on using the library read doc/API
 Adding support for other architectures and devices
 --------------------------------------------------
 Please refer to:
- doc/ARCH 
- doc/ARCH_API
+* doc/ARCH 
+* doc/ARCH_API
 
 Contact
 -------
 author: Vladislav Levenetz
+
 email: octal.s@gmail.com
 
 https://github.com/OctalS/mcu-threads.git
