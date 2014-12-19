@@ -59,6 +59,7 @@ In your source files:
 4. Implement a scheduler.
 mcu-threads is designed to be used with timer interrupts to schedule threads.
 The actual task switching is left to be implemented by you because it is arch specific.
+Bare in mind that current->next always points the next valid thread to switch.
 Provided by mcu-threads from include/common.h
 
         thread_t *current - points to the currently running thread.
