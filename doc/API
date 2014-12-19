@@ -2,7 +2,7 @@ mcu-threads: API
 ================
 
 The very first thing you must do is to define a new "main" function.
-We would call this 'main_thread'. The idea is that we transforming
+We would call this 'main_thread'. The idea is that we are transforming
 the environment from a single tasking to multitasking.
 To do this you need to invoke:
 
@@ -39,7 +39,7 @@ To put the thread waiting on an event:
         thread_wait(wq, cond);
 
 where:
-  'wq': is pointer your wait queue
+  'wq': pointer to your wait queue
   'cond': the condition that should be waited on
 
 You can put as many threads as you like in the same wait queue or define different for each one.
