@@ -13,7 +13,9 @@ Absolutely required:
   TOOLCHAIN := your toolchain prefix
   REG_TYPE := C register type (TODO: change this to REG_SIZE)
   NR_REGS := number of registers that you will save on context switch
-  THREAD_SIZE := the preferred thread size. In this size is include
+  THREAD_SIZE := the preferred thread size. This size includes:
+  	NR_REGS * sizeof(REG_TYPE) + 2 * sizeof(void *)
+  	You should a consider a good value so you can have enough stack.
 
 Optional:
   FLAGS := Any flags that need to go the compiler.
@@ -43,7 +45,7 @@ The build system also provides you with the following variables:
   ARCH - Holds the name of your arch
   CPU - The cpu variant if provided.
   TOOLCHAIN - your toolchain prefix
-  CC - Prefixed C compiler including including: 
+  CC - Prefixed C compiler including: 
         all settings defined in section 2) defined as macros with -D, and include path to ../../include
   AS - Prefixed as (TODO: add flags)
   AR - Prefixed ar
@@ -52,7 +54,7 @@ The build system also provides you with the following variables:
 
 In your source files:
 
-#include <common.h> - This file defines thread_t and other. Take a look at it.
+#include <common.h> - This file defines thread_t, current and other. Take a look at it.
 
 4. Implement a scheduler.
 mcu-threads is designed to be used with timer interrupts to schedule threads.
