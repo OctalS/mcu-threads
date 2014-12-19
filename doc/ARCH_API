@@ -1,0 +1,37 @@
+mcu-threads: Arch interface
+===========================
+
+This document describes all details about the functions that need be implemented.
+
+mcu-threads is designed to be used with timer interrupts to schedule threads.
+The actual task switching is left to be implemented by you because it is arch specific.
+Bare in mind that current->next always points the next valid thread to switch.
+
+* arch_enable_interrupts() and arch_disable_interrupts()
+
+        This calls should enable/disable globally the interrupts on the device.
+
+* arch_init()
+
+        Called by threads_init() with interrupts disabled.
+        All arch specific initialization must be done here. This is the right place
+        to setup your hardware timer. You should choose a good timer tick value that
+        exploits the system in the best possible way.
+
+* thr_lock() and thr_unlock()
+
+        These functions must disable/enable respectively only the hardware timer if possible.
+        It's not recommended to disable all interrupts globally here.
+        Care must be taken in thr_lock(). The function must ensure that the timer is disabled
+        and no timer interrupts will be generated after exiting.
+
+* arch_prepare_thread(thread_t *t, void *fn)
+
+        Called from thread_create() This call should at least prepare the thread 't' stack.
+        This is specific to your scheduler design.
+
+* arch_schedule()
+
+        This call must invoke your scheduler and give up the cpu to another thread.
+        Be very careful when designing this call. The simplest way is to generate a software
+        interrupt to your timer isr.
