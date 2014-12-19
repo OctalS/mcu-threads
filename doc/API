@@ -1,0 +1,72 @@
+mcu-threads: API
+================
+
+The very first thing you must do is to define a new "main" function.
+We would call this 'main_thread'. The idea is that we transforming
+the environment from a single tasking to multitasking.
+To do this you need to invoke:
+
+        void threads_init(void (*fn)(void));
+
+where 'fn' is your main_thread.
+
+Now you are in threading context and can start creating new threads.
+This is simply achieved by:
+
+        void thread_create(thread_t *t, void *fn);
+
+where:
+  't': is a globally defined variable of type thread_t
+  'fn': is your thread function to execute
+
+Don't use return statement at the end of your threading function.
+Instead to exit from a thread use:
+
+        void thread_exit(void);
+
+This will safely terminate the current thread and will give the CPU to the next running one.
+
+The library also supports thread sleeping on a condition.
+To use this functionality first you need to define global wait queue with:
+
+        DEFINE_WAIT_QUEUE(name);
+
+where:
+  'name': is the name of your queue
+
+To put the thread waiting on an event:
+
+        thread_wait(wq, cond);
+
+where:
+  'wq': is pointer your wait queue
+  'cond': the condition that should be waited on
+
+You can put as many threads as you like in the same wait queue or define different for each one.
+This is up to you.
+
+Waking up threads can be achieved in two ways: normal or with an urgent priority.
+
+Normal wake up:
+
+        void thread_wakeup(thread_t **wq);
+
+where:
+  'wq': is the wait queue holding sleeping threads.
+
+This will wakeup all threads in the wait queue, but only those that meet their sleeping condition
+will be really awaken. The other ones will be put back to sleep.
+No context switch will occur after this function. This means that the threads will be awaken in a
+lazy fashion and will not be executed by the system immediately. If you are in a hurry and want
+threads to be executed right away use;
+
+        void thread_wakeup_now(thread_t **wq);
+ 
+This will give the CPU to the first thread in the wait queue immediately.
+Hence a context switch will occur.
+
+If you want to put a thread asleep unconditionally for some reason use:
+
+        void thread_sleep(thread_t **wq, thread_t *t);
+
+TODO: Need locking
