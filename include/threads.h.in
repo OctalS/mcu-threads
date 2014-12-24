@@ -23,27 +23,38 @@
 #define THREAD_SIZE	@THREAD_SIZE@
 
 typedef unsigned char thread_t[THREAD_SIZE];
+typedef thread_t *thread_wait_queue;
 
 extern thread_t *current;
 
 extern void thread_create(thread_t *t, void *fn);
 extern void thread_exit(void);
 extern void threads_init(void (*fn)(void));
-extern void thread_sleep(thread_t **wq, thread_t *t);
-extern void thread_wakeup(thread_t **wq);
-extern void thread_wakeup_now(thread_t **wq);
+extern void thread_sleep(thread_wait_queue *wq, thread_t *t);
+extern void thread_wakeup(thread_wait_queue *wq);
+extern void thread_wakeup_now(thread_wait_queue *wq);
 
 /**
  * Defines and initializes a wait queue
  *
  * @name: name of the queue
 */
-#define DEFINE_WAIT_QUEUE(name) thread_t *name = (void *)0
+#define DEFINE_WAIT_QUEUE(name) thread_wait_queue name = (void *)0
+
+/**
+ * Dynamically initializes a wait queue
+ *
+ * @wq: wait queue
+*/
+static inline void thread_init_waitqueue(thread_wait_queue *wq)
+{
+	*wq = (void *)0;
+}
 
 /**
  * Wait on a condition.
  *
- * @wq: ** pointer the wait queue
+ * @wq: pointer the wait queue
  * @cond: condition to wait on
  *
  * Puts the current thread to sleep until

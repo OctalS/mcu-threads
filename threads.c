@@ -115,7 +115,7 @@ static inline void del_thread(thread_t *t)
  *
  * @notice: Undefined behaviour if @wq is not initialized.
 */
-void thread_sleep(thread_t **wq, thread_t *t)
+void thread_sleep(thread_wait_queue *wq, thread_t *t)
 {
 	thread_t *l;
 
@@ -146,7 +146,7 @@ sched:
  * the list of running threads.
  * No context switch will occur after this call.
 */
-void thread_wakeup(thread_t **wq)
+void thread_wakeup(thread_wait_queue *wq)
 {
 	thread_t *rlast, *slast;
 
@@ -176,7 +176,7 @@ exit:
  * current and gives the CPU to the first thread immediately.
  * No context switch will occur if the wait queue is empty.
 */
-void thread_wakeup_now(thread_t **wq)
+void thread_wakeup_now(thread_wait_queue *wq)
 {
 	thread_t *rnext, *slast;
 

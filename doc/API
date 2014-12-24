@@ -34,9 +34,16 @@ To use this functionality first you need to define global wait queue with:
 where:
   'name': is the name of your queue
 
+or you can do this dynamically with:
+
+	thread_init_waitqueue(thread_wait_queue *wq);
+
+where:
+  'wq': pointer to your wait queue
+
 To put the thread waiting on an event:
 
-        thread_wait(wq, cond);
+        thread_wait(thread_wait_queue *wq, cond);
 
 where:
   'wq': pointer to your wait queue
@@ -49,7 +56,7 @@ Waking up threads can be achieved in two ways: normal or with an urgent priority
 
 Normal wake up:
 
-        void thread_wakeup(thread_t **wq);
+        void thread_wakeup(thread_wait_queue *wq);
 
 where:
   'wq': is the wait queue holding sleeping threads.
@@ -60,13 +67,13 @@ No context switch will occur after this function. This means that the threads wi
 lazy fashion and will not be executed by the system immediately. If you are in a hurry and want
 threads to be executed right away use;
 
-        void thread_wakeup_now(thread_t **wq);
+        void thread_wakeup_now(thread_wait_queue *wq);
  
 This will give the CPU to the first thread in the wait queue immediately.
 Hence a context switch will occur.
 
 If you want to put a thread asleep unconditionally for some reason use:
 
-        void thread_sleep(thread_t **wq, thread_t *t);
+        void thread_sleep(thread_wait_queue *wq, thread_t *t);
 
 TODO: Need locking

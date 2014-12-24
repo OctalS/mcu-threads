@@ -41,6 +41,8 @@ typedef union thread {
 	unsigned char stack[THREAD_SIZE];
 } thread_t;
 
+typedef thread_t *thread_wait_queue;
+
 extern thread_t *current;
 extern thread_t *running;
 
