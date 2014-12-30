@@ -102,24 +102,19 @@ static inline void del_thread(thread_t *t)
 		running = next;
 }
 
-
 /**
  * Puts a thread to sleep.
  *
  * @wq: wait queue to sleep on
  * @t: thread to put to sleep
  *
- * Move the thread from the list of running threads
- * to a defined wait queue. The CPU is given to the
- * next thread after this.
- *
- * @notice: Undefined behaviour if @wq is not initialized.
+ * This is for internal use.
+ * Must be called with threads locked.
 */
-void thread_sleep(thread_wait_queue *wq, thread_t *t)
+static inline void __thread_sleep(thread_wait_queue *wq, thread_t *t)
 {
 	thread_t *l;
 
-	thr_lock();
 	del_thread(t);
 
 	if (!*wq) {
@@ -138,19 +133,34 @@ sched:
 }
 
 /**
+ * Puts a thread to sleep.
+ *
+ * @wq: wait queue to sleep on
+ * @t: thread to put to sleep
+ *
+ * Move the thread from the list of running threads
+ * to a defined wait queue. The CPU is given to the
+ * next thread after this.
+ *
+ * @notice: Undefined behaviour if @wq is not initialized.
+*/
+void thread_sleep(thread_wait_queue *wq, thread_t *t)
+{
+	thr_lock();
+	__thread_sleep(wq, t);
+}
+
+/**
  * Wakes up all threads in the wait queue.
  *
  * @wq: wait queue holding sleeping threads.
  *
- * Appends all threads from the wait queue at the end of
- * the list of running threads.
- * No context switch will occur after this call.
+ * This is for internal use.
+ * Must be called with threads locked.
 */
-void thread_wakeup(thread_wait_queue *wq)
+static inline void __thread_wakeup(thread_wait_queue *wq)
 {
 	thread_t *rlast, *slast;
-
-	thr_lock();
 
 	if (!*wq)
 		goto exit;
@@ -172,15 +182,27 @@ exit:
  *
  * @wq: wait queue holding sleeping threads.
  *
- * Appends all threads from the wait queue right after
- * current and gives the CPU to the first thread immediately.
- * No context switch will occur if the wait queue is empty.
+ * Appends all threads from the wait queue at the end of
+ * the list of running threads.
+ * No context switch will occur after this call.
 */
-void thread_wakeup_now(thread_wait_queue *wq)
+void thread_wakeup(thread_wait_queue *wq)
+{
+	thr_lock();
+	__thread_wakeup(wq);
+}
+
+/**
+ * Wakes up all threads in the wait queue.
+ *
+ * @wq: wait queue holding sleeping threads.
+ *
+ * This is for internal use.
+ * Must be called with threads locked.
+*/
+static inline void __thread_wakeup_now(thread_wait_queue *wq)
 {
 	thread_t *rnext, *slast;
-
-	thr_lock();
 
 	if (!*wq)
 		goto exit;
@@ -199,6 +221,80 @@ void thread_wakeup_now(thread_wait_queue *wq)
 	return;
 exit:
 	thr_unlock();
+}
+
+/**
+ * Wakes up all threads in the wait queue.
+ *
+ * @wq: wait queue holding sleeping threads.
+ *
+ * Appends all threads from the wait queue right after
+ * current and gives the CPU to the first thread immediately.
+ * No context switch will occur if the wait queue is empty.
+*/
+void thread_wakeup_now(thread_wait_queue *wq)
+{
+	thr_lock();
+	__thread_wakeup_now(wq);
+}
+
+/**
+ * Locks a mutex.
+ *
+ * @mutex: the mutex to lock.
+ *
+ * Blocks the current process until the mutex
+ * is released. Context switch will occur if the
+ * mutex is still held by another thread.
+ *
+ * @notice: Undefined behaviour if the mutex is not initialized.
+*/
+void thread_mutex_lock(struct thread_mutex *mutex)
+{
+	while (1) {
+		thr_lock();
+		if (mutex->count) {
+			__thread_sleep(&mutex->wq, current);
+		} else {
+			mutex->count++;
+			break;
+		}
+	}
+
+	thr_unlock();
+}
+
+/**
+ * Unlocks a mutex
+ *
+ * @mutex: the mutex to lock.
+ *
+ * Releases the mutex and wakes up any other threads
+ * that are waiting on it.
+ * Context switch may occur.
+ *
+ * @notice: Undefined behaviour if the mutex is not initialized.
+*/
+void thread_mutex_unlock(struct thread_mutex *mutex)
+{
+	thr_lock();
+	mutex->count--;
+
+	/* Use wakeup_now() here so we can give other
+	 * threads a chance to get the mutex.
+	 * This can be explained in the following example:
+	 * thread1:
+	 *	while (1) {
+	 *		thread_mutex_lock();
+	 *		...
+	 *		thread_mutex_unlock();
+	 *	}
+	 * If using the normal wakeup and the code in the critical
+	 * section is short, other threads may never have a chance
+	 * to get the mutex as the above code will acquire the lock
+	 * almost immediately after releasing it.
+	*/
+	__thread_wakeup_now(&mutex->wq);
 }
 
 /**
