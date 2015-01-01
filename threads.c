@@ -265,6 +265,35 @@ void thread_mutex_lock(struct thread_mutex *mutex)
 }
 
 /**
+ * Try to lock a mutex.
+ *
+ * @mutex: the mutex to lock.
+ *
+ * This function will lock the mutex if it is not held
+ * by another thread. Otherwise it will return a non-negative
+ * value indicating that the mutex is already locked.
+ * This is the non-blocking version of thread_mutex_lock()
+ *
+ * @notice: Undefined behaviour if the mutex is not initialized.
+ * @return: Non-zero value if the mutex is already locked.
+*/
+int thread_mutex_trylock(struct thread_mutex *mutex)
+{
+	int ret = 0;
+
+	thr_lock();
+
+	if (mutex->count)
+		ret = 1;
+	else
+		mutex->count++;
+
+	thr_unlock();
+
+	return ret;
+}
+
+/**
  * Unlocks a mutex
  *
  * @mutex: the mutex to lock.
