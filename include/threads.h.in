@@ -28,6 +28,11 @@
 typedef unsigned char thread_t[THREAD_SIZE];
 typedef thread_t *thread_wait_queue;
 
+struct thread_mutex {
+	unsigned char count;
+	thread_wait_queue wq;
+};
+
 extern thread_t *current;
 
 extern void thread_create(thread_t *t, void *fn);
@@ -36,6 +41,9 @@ extern void threads_init(void (*fn)(void));
 extern void thread_sleep(thread_wait_queue *wq, thread_t *t);
 extern void thread_wakeup(thread_wait_queue *wq);
 extern void thread_wakeup_now(thread_wait_queue *wq);
+extern void thread_mutex_lock(struct thread_mutex *mutex);
+extern void thread_mutex_unlock(struct thread_mutex *mutex);
+extern int thread_mutex_trylock(struct thread_mutex *mutex);
 
 /**
  * Defines and initializes a wait queue
@@ -65,5 +73,27 @@ static inline void thread_init_waitqueue(thread_wait_queue *wq)
 */
 #define thread_wait(wq, cond) \
 	while (!(cond)) { thread_sleep((wq), current); }
+
+/**
+ * Defines and initializes a mutex
+ *
+ * @name: name of the mutex
+*/
+#define DEFINE_MUTEX(name)		\
+	struct thread_mutex name = {	\
+		.count = 0,		\
+		.wq = (void *)0,	\
+	}
+
+/**
+ * Dynamically initializes a mutex
+ *
+ * @mutex: the mutex
+*/
+static inline void thread_init_mutex(struct thread_mutex *mutex)
+{
+	mutex->count = 0;
+	thread_init_waitqueue(&mutex->wq);
+}
 
 #endif /* THREADS_H */

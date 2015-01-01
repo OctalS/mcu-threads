@@ -43,6 +43,11 @@ typedef union thread {
 
 typedef thread_t *thread_wait_queue;
 
+struct thread_mutex {
+	unsigned char count;
+	thread_wait_queue wq;
+};
+
 extern thread_t *current;
 extern thread_t *running;
 
