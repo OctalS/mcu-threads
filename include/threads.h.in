@@ -15,6 +15,9 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ * This is a template for the pulbic header and must be in sync
+ * with definitions in include/common.h
 */
 
 #ifndef THREADS_H
