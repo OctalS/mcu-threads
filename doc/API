@@ -76,4 +76,28 @@ If you want to put a thread asleep unconditionally for some reason use:
 
         void thread_sleep(thread_wait_queue *wq, thread_t *t);
 
-TODO: Need locking
+For protecting data against race conditions, the library provides you with mutexes.
+To use them first you need to define and initialize one of type: struct thread_mutex
+As like wait queues you can either define and initialize statically with:
+
+	DEFINE_MUTEX(name);
+
+or dynamically:
+
+	void thread_init_mutex(struct thread_mutex *mutex);
+
+where:
+  'mutex': is your struct mutex
+
+Locking and unlocking is straight forward done with:
+
+	void thread_mutex_lock(struct thread_mutex *mutex);
+	void thread_mutex_unlock(struct thread_mutex *mutex);
+	int thread_mutex_trylock(struct thread_mutex *mutex);
+
+where:
+  'mutex': is your struct mutex
+
+The thread_mutex_trylock() will return a non-negative value if the mutex is already locked and
+will return.
+If the mutex is not locked though it will acquire it.
