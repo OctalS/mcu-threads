@@ -1,6 +1,6 @@
 mcu-threads
 ===========
-Version: 1.0.0
+Version: 1.1.0
 
 Small and compact library to implement multitasking
 in embedded systems where resources are scarce.
